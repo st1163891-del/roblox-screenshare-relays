@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#111; color:#fff; font-family:sans-serif; text-align:center; padding:20px;">
+  <h3>Live Mobile Screen/Camera Feed</h3>
+  <video id="v" autoplay playsinline style="width:200px; display:none;"></video>
+  <canvas id="c" width="128" height="128" style="border:2px solid #555; border-radius:8px;"></canvas>
+  <p id="status">Connecting to camera...</p>
+  <script>
+    const video = document.getElementById('v');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then(stream => { 
+        video.srcObject = stream; 
+        status.innerText = "Streaming live to relay server!";
+      })
+      .catch(err => { status.innerText = "Camera error: " + err; });
+
+    setInterval(() => {
+      if(video.readyState === video.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(video, 0, 0, 128, 128);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
+        
+        fetch('/upload-frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl })
+        }).catch(() => {});
+      }
+    }, 150);
+  </script>
+</body>
+</html>
