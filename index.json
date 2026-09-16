@@ -1,0 +1,29 @@
+const express = require('express');
+const app = express();
+const path = require('path');
+
+app.use(express.json({ limit: '10mb' }));
+
+let currentFrame = ""; 
+
+// Serve the mobile video capture page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Endpoint for your phone to push image frames
+app.post('/upload-frame', (req, res) => {
+    if (req.body.image) {
+        currentFrame = req.body.image;
+        return res.status(200).send({ success: true });
+    }
+    res.status(400).send({ error: "No image payload" });
+});
+
+// Endpoint for Studio Lite to read the image frames
+app.get('/get-frame', (req, res) => {
+    res.status(200).json({ image: currentFrame });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
